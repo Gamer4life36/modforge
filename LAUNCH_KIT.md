@@ -175,3 +175,69 @@ Open a config, change a value, Save — ModForge backs up the original automatic
 - [ ] 2–3 screenshots ready (Editor, Converter, one more)
 - [ ] Read the rules of each subreddit before posting
 - [ ] Post, then **reply to early comments** within the first hour
+
+---
+
+## 6. Reach everyone WITHOUT spamming — rollout plan
+
+**The one rule that keeps you safe:** never paste the *same* text into many subs at once — Reddit flags identical cross-posts, and a recently-recovered account is extra sensitive. Instead: **1–2 posts/day, each tailored to the sub, and reply to comments.** Every draft below opens differently on purpose.
+
+### Suggested schedule
+| Day | Community | Angle | Status |
+|---|---|---|---|
+| 1 | r/SideProject | "I built this" | ✅ posted |
+| 1 | r/opensource | open-source / tech (MIT, local-first) | ⏳ staged — needs your **Post** |
+| 2 | r/coolgithubprojects | GitHub / tech | draft ↓ |
+| 3 | r/modding | modder pain + backups | draft ↓ |
+| 4 | a specific game's sub/Discord | tied to one game | template ↓ |
+| 5 | r/software (or r/Windows) | free Windows utility | draft ↓ |
+| any | itch.io / Product Hunt / Show HN | see notes ↓ | pick days |
+
+Space them out. If a sub has a weekly self-promo thread, use it. Read each sub's rules, add the right flair, and reply to every early comment.
+
+### r/coolgithubprojects  *(check the sub's title format — it often wants a `[language]` tag)*
+**Title:** `ModForge – edit game config/save files as fields, convert formats, decode crash logs (Rust/Tauri + TS, MIT)`
+**Body:**
+```
+Built with a Rust/Tauri backend and a React + TypeScript UI. The core (format detect / parse / editable-model) is plain TypeScript with no framework or Tauri deps, so it's portable and testable; file I/O is a thin Rust command layer for full native filesystem access.
+
+Five tools in one ~2 MB app: field editor for JSON/INI/TOML/YAML/XML/CSV (backs up before every save), format converter, crash-log explainer, build planner, and progress tracker.
+
+MIT, README + build steps: https://github.com/Gamer4life36/modforge/releases
+Feedback on the parsing layer / new formats welcome.
+```
+
+### r/modding
+**Title:** `Made a free tool that edits game config/save files as fields — and auto-backs up before every save`
+**Body:**
+```
+Tired of hand-editing configs in Notepad and bricking a save, I built ModForge. Open a JSON/INI/TOML/YAML/XML/CSV file and every setting becomes an editable field (binaries open as read-only hex). It copies the original to a timestamped .modforge-bak file before every save, so you can always roll back.
+
+Bonus tools: format converter, crash-log explainer, loadout planner, progress tracker. Free, open source, ~2 MB, Windows.
+
+https://github.com/Gamer4life36/modforge/releases — tell me which games/formats to support next.
+```
+
+### r/software  *(or r/Windows / r/windowsapps)*
+**Title:** `ModForge – free, open-source Windows tool for editing game/app config & save files (automatic backups, no telemetry)`
+**Body:**
+```
+A small (~2 MB) open-source utility that opens config/save files (JSON, INI, TOML, YAML, XML, CSV) as editable fields and backs up the original before every save. No telemetry; files stay on your machine. Also converts between formats, explains crash logs, and has a build planner + tracker.
+
+Installer + portable exe + a beginner PDF guide: https://github.com/Gamer4life36/modforge/releases
+(Unsigned for now, so SmartScreen → More info → Run anyway. MIT licensed.)
+```
+
+### A specific game's sub or Discord  *(highest conversion — replace `[GAME]`)*
+**Title:** `A free tool for editing [GAME] config/save files safely (auto-backup before every save)`
+**Body:**
+```
+I made a free app that opens config/save files as editable fields with an automatic backup before every save. It already handles common formats, and I'd love to add [GAME]-specific presets — tell me which files you edit and what you wish was easier.
+
+https://github.com/Gamer4life36/modforge/releases
+```
+
+### Non-Reddit
+- **itch.io** — upload under **Tools**; attach the release; set price to free / pay-what-you-want. Great long-tail discovery.
+- **Product Hunt** — pick a launch day; tagline: *"Edit game config & save files as fields — safely."* Have the GIF + 2–3 screenshots ready.
+- **Hacker News (Show HN)** — weekday morning US-Eastern. Title: `Show HN: ModForge – open-source desktop toolkit for editing game config/save files`. Link the repo; be around to answer.
