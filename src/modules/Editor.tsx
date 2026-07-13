@@ -311,7 +311,7 @@ export default function Editor({ setStatus }: { setStatus: (s: string) => void }
           </div>
 
           <div className="ai-output">
-            {aiBusy && <div className="spin">Contacting Claude…</div>}
+            {aiBusy && <div className="spin">Contacting AI…</div>}
             {!aiBusy && aiOutput && <pre>{aiOutput}</pre>}
             {!aiBusy && !aiOutput && <div className="hint">Open a file, then ask or hit “Explain this file.”</div>}
           </div>

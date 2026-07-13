@@ -1,4 +1,4 @@
-// Minimal Anthropic (Claude) client for the AI side-panel.
+// Minimal AI client (Anthropic API) for the AI side-panel.
 // The API key is stored locally on the user's machine and never leaves it
 // except in the direct request to Anthropic.
 
@@ -6,9 +6,9 @@ const KEY_STORAGE = "modforge.anthropic_key";
 const MODEL_STORAGE = "modforge.model";
 
 export const MODELS = [
-  { id: "claude-sonnet-5", label: "Claude Sonnet 5 (balanced)" },
-  { id: "claude-opus-4-8", label: "Claude Opus 4.8 (most capable)" },
-  { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (fastest)" },
+  { id: "claude-sonnet-5", label: "Balanced (recommended)" },
+  { id: "claude-opus-4-8", label: "Most capable" },
+  { id: "claude-haiku-4-5-20251001", label: "Fastest" },
 ];
 
 export function getApiKey(): string {
@@ -33,7 +33,7 @@ export class NoKeyError extends Error {
   }
 }
 
-/** Send a single-turn prompt to Claude and return the text response. */
+/** Send a single-turn prompt to the AI and return the text response. */
 export async function askAI(system: string, user: string): Promise<string> {
   const key = getApiKey();
   if (!key) throw new NoKeyError();
