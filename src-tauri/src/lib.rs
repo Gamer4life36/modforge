@@ -94,6 +94,113 @@ fn write_file(path: String, contents: String, make_backup: bool) -> Result<Optio
     Ok(backup_path)
 }
 
+// ---- SQLite save editing (many Android/Unity games store saves as SQLite) ----
+
+#[derive(serde::Serialize)]
+struct TableData {
+    columns: Vec<String>,
+    rows: Vec<Vec<String>>,
+    rowids: Vec<i64>,
+}
+
+#[tauri::command]
+fn sqlite_tables(path: String) -> Result<Vec<String>, String> {
+    let conn = rusqlite::Connection::open(&path).map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+        .map_err(|e| e.to_string())?;
+    let mapped = stmt
+        .query_map([], |r| r.get::<_, String>(0))
+        .map_err(|e| e.to_string())?;
+    let mut out = Vec::new();
+    for r in mapped {
+        out.push(r.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
+
+#[tauri::command]
+fn sqlite_table(path: String, table: String) -> Result<TableData, String> {
+    let conn = rusqlite::Connection::open(&path).map_err(|e| e.to_string())?;
+    let q = format!("SELECT rowid, * FROM \"{}\" LIMIT 1000", table.replace('"', "\"\""));
+    let mut stmt = conn.prepare(&q).map_err(|e| e.to_string())?;
+    let ncol = stmt.column_count();
+    let colnames: Vec<String> = stmt.column_names().iter().map(|s| s.to_string()).collect();
+    let mut rows = Vec::new();
+    let mut rowids = Vec::new();
+    let mut qr = stmt.query([]).map_err(|e| e.to_string())?;
+    while let Some(row) = qr.next().map_err(|e| e.to_string())? {
+        let rid: i64 = row.get(0).map_err(|e| e.to_string())?;
+        rowids.push(rid);
+        let mut vals = Vec::new();
+        for i in 1..ncol {
+            let v = match row.get_ref(i).map_err(|e| e.to_string())? {
+                rusqlite::types::ValueRef::Null => String::new(),
+                rusqlite::types::ValueRef::Integer(n) => n.to_string(),
+                rusqlite::types::ValueRef::Real(f) => f.to_string(),
+                rusqlite::types::ValueRef::Text(t) => String::from_utf8_lossy(t).into_owned(),
+                rusqlite::types::ValueRef::Blob(b) => format!("<blob {} bytes>", b.len()),
+            };
+            vals.push(v);
+        }
+        rows.push(vals);
+    }
+    Ok(TableData {
+        columns: colnames[1..].to_vec(),
+        rows,
+        rowids,
+    })
+}
+
+#[tauri::command]
+fn sqlite_set(
+    path: String,
+    table: String,
+    rowid: i64,
+    column: String,
+    value: String,
+) -> Result<String, String> {
+    let bp = format!("{}.modforge-bak-{}", path, timestamp());
+    fs::copy(&path, &bp).map_err(|e| format!("backup failed: {e}"))?;
+    let conn = rusqlite::Connection::open(&path).map_err(|e| e.to_string())?;
+    let sql = format!(
+        "UPDATE \"{}\" SET \"{}\" = ?1 WHERE rowid = ?2",
+        table.replace('"', "\"\""),
+        column.replace('"', "\"\"")
+    );
+    // Keep numeric columns numeric where possible.
+    if let Ok(n) = value.parse::<i64>() {
+        conn.execute(&sql, rusqlite::params![n, rowid])
+    } else if let Ok(f) = value.parse::<f64>() {
+        conn.execute(&sql, rusqlite::params![f, rowid])
+    } else {
+        conn.execute(&sql, rusqlite::params![value, rowid])
+    }
+    .map_err(|e| e.to_string())?;
+    Ok(bp)
+}
+
+/// Run adb with the given args (e.g. ["devices"], ["pull", remote, local]).
+/// For rooted devices you can use ["shell", "su", "-c", "..."] to reach
+/// protected /data/data/<pkg>/ save files. Returns combined stdout+stderr.
+#[tauri::command]
+fn adb_run(args: Vec<String>) -> Result<String, String> {
+    let output = std::process::Command::new("adb")
+        .args(&args)
+        .output()
+        .map_err(|e| format!("adb not found on PATH or failed to run: {e}"))?;
+    let mut s = String::from_utf8_lossy(&output.stdout).into_owned();
+    let err = String::from_utf8_lossy(&output.stderr);
+    if !err.trim().is_empty() {
+        s.push('\n');
+        s.push_str(&err);
+    }
+    if s.trim().is_empty() {
+        s = format!("(no output; exit {:?})", output.status.code());
+    }
+    Ok(s)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -109,7 +216,14 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![read_file, write_file])
+        .invoke_handler(tauri::generate_handler![
+            read_file,
+            write_file,
+            sqlite_tables,
+            sqlite_table,
+            sqlite_set,
+            adb_run
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -47,3 +47,33 @@ export function writeFile(
 ): Promise<string | null> {
   return invoke<string | null>("write_file", { path, contents, makeBackup });
 }
+
+// ---- SQLite (game saves stored as .sqlite/.db) ----
+
+export interface SqlTable {
+  columns: string[];
+  rows: string[][];
+  rowids: number[];
+}
+
+export function sqliteTables(path: string): Promise<string[]> {
+  return invoke<string[]>("sqlite_tables", { path });
+}
+export function sqliteTable(path: string, table: string): Promise<SqlTable> {
+  return invoke<SqlTable>("sqlite_table", { path, table });
+}
+/** Update one cell; returns the backup path created before writing. */
+export function sqliteSet(
+  path: string,
+  table: string,
+  rowid: number,
+  column: string,
+  value: string
+): Promise<string> {
+  return invoke<string>("sqlite_set", { path, table, rowid, column, value });
+}
+
+// ---- ADB passthrough ----
+export function adbRun(args: string[]): Promise<string> {
+  return invoke<string>("adb_run", { args });
+}

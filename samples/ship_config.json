@@ -7,7 +7,7 @@
       "cargoSlots": 52
     },
     "movement": {
-      "maxSpeedKnots": 80,
+      "maxSpeedKnots": 26,
       "acceleration": 1.4,
       "turnRate": 0.8
     },

@@ -271,3 +271,14 @@ th, .rowops { white-space: nowrap; }
 .tracker-add { flex-direction: row !important; align-items: center; gap: 8px; }
 .tracker-add input { flex: 1; }
 .tracker-add input[type="number"] { flex: 0 0 110px; }
+
+/* Database + Device */
+.module-db, .module-device { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.db-body { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; min-height: 0; }
+.device-body { flex: 1; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.device-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.device-row label { flex-basis: 100%; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.device-row input {
+  flex: 1; min-width: 240px; background: var(--bg); border: 1px solid var(--line); color: var(--text);
+  padding: 7px 9px; border-radius: 6px; font-family: "Cascadia Code", monospace; font-size: 12.5px;
+}

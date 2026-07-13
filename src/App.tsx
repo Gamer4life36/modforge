@@ -4,9 +4,11 @@ import Converter from "./modules/Converter";
 import LogExplainer from "./modules/LogExplainer";
 import Planner from "./modules/Planner";
 import Tracker from "./modules/Tracker";
+import Database from "./modules/Database";
+import Device from "./modules/Device";
 import "./App.css";
 
-type Tab = "editor" | "converter" | "logs" | "planner" | "tracker";
+type Tab = "editor" | "converter" | "logs" | "planner" | "tracker" | "database" | "device";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("editor");
@@ -50,6 +52,18 @@ export default function App() {
           >
             Tracker
           </button>
+          <button
+            className={`tab ${tab === "database" ? "active" : ""}`}
+            onClick={() => setTab("database")}
+          >
+            Database
+          </button>
+          <button
+            className={`tab ${tab === "device" ? "active" : ""}`}
+            onClick={() => setTab("device")}
+          >
+            Device
+          </button>
         </nav>
         <div className="spacer" />
       </header>
@@ -60,6 +74,8 @@ export default function App() {
         {tab === "logs" && <LogExplainer setStatus={setStatus} />}
         {tab === "planner" && <Planner setStatus={setStatus} />}
         {tab === "tracker" && <Tracker setStatus={setStatus} />}
+        {tab === "database" && <Database setStatus={setStatus} />}
+        {tab === "device" && <Device setStatus={setStatus} />}
       </div>
 
       <footer className="status">{status}</footer>
