@@ -1,0 +1,29 @@
+{
+  "ship": {
+    "name": "Frigate_Brethren",
+    "hull": {
+      "maxHealth": 2400,
+      "armorRating": 55,
+      "cargoSlots": 52
+    },
+    "movement": {
+      "maxSpeedKnots": 80,
+      "acceleration": 1.4,
+      "turnRate": 0.8
+    },
+    "sails": {
+      "count": 3,
+      "efficiency": 1,
+      "autoRaise": true
+    },
+    "combat": {
+      "cannonCount": 12,
+      "cannonDamage": 140,
+      "reloadSeconds": 6.5
+    }
+  },
+  "flags": {
+    "invulnerable": false,
+    "unlimitedCargo": false
+  }
+}
