@@ -1,6 +1,6 @@
 # 🚀 ModForge Launch Kit
 
-Everything you need to announce ModForge. Replace `<YOUR GITHUB LINK>` with your
+Everything you need to announce ModForge. Replace `https://github.com/Gamer4life36/modforge/releases` with your
 **Releases** page URL before posting (e.g. `https://github.com/<you>/modforge/releases`).
 
 > **Post order:** GitHub (home base) → record the GIF → Reddit + the target game's
@@ -32,7 +32,7 @@ Your files never leave your PC. The AI features are optional and only run when *
 
 Built with Tauri (Rust + React), so it's a ~2 MB install and fast.
 
-**Download / source:** <YOUR GITHUB LINK>
+**Download / source:** https://github.com/Gamer4life36/modforge/releases
 There's also a beginner-friendly PDF guide in the release.
 
 Heads-up: it's not code-signed yet, so Windows SmartScreen will say "unrecognized app" — click *More info → Run anyway*. It's early (v0.4), so I'd love feedback on what to add or which file formats/games to support next.
@@ -90,7 +90,7 @@ Heads-up: it's not code-signed yet, so Windows SmartScreen will say "unrecognize
 
 A full beginner's PDF guide is included in the downloads.
 
-[b]Source code & issues:[/b] <YOUR GITHUB LINK>
+[b]Source code & issues:[/b] https://github.com/Gamer4life36/modforge/releases
 [b]License:[/b] MIT (free to use, modify, and share).
 ```
 
@@ -142,7 +142,7 @@ What you're seeing: open a game config, change one value (26 → 80), hit Save �
 
 It's a free, open-source Windows app (~2 MB) with 5 tools in one: config/save editor, format converter, crash-log explainer, build planner, and progress tracker.
 
-Download + source + a beginner PDF guide: <YOUR GITHUB LINK>
+Download + source + a beginner PDF guide: https://github.com/Gamer4life36/modforge/releases
 Early build — tell me what formats or games to support next.
 ```
 
@@ -152,12 +152,12 @@ Editing game files in Notepad and breaking them? I built ModForge.
 
 Open a config → change a value → Save. It backs up the original first, so you can't brick it. Free & open source, 5 tools in one ~2 MB app.
 
-⬇️ <LINK> #gamedev #modding
+⬇️ https://github.com/Gamer4life36/modforge/releases #gamedev #modding
 ```
 
 ### Discord
 ```
-Made a free tool for editing game config/save files as simple fields — auto-backs up before every save so you can't break anything. Also does format conversion, crash-log decoding, build planning + tracking. Open source: <LINK>
+Made a free tool for editing game config/save files as simple fields — auto-backs up before every save so you can't break anything. Also does format conversion, crash-log decoding, build planning + tracking. Open source: https://github.com/Gamer4life36/modforge/releases
 ```
 
 ### Nexus image caption
@@ -170,7 +170,7 @@ Open a config, change a value, Save — ModForge backs up the original automatic
 ## 5. Pre-launch checklist
 - [ ] GitHub repo pushed and **public**
 - [ ] Release **v0.4.0** created with `ModForge_0.4.0_x64-setup.exe` + `ModForge_User_Guide.pdf` attached
-- [ ] `<YOUR GITHUB LINK>` replaced everywhere above (point at the **Releases** page)
+- [ ] `https://github.com/Gamer4life36/modforge/releases` replaced everywhere above (point at the **Releases** page)
 - [ ] Demo **GIF** recorded and under ~5 MB
 - [ ] 2–3 screenshots ready (Editor, Converter, one more)
 - [ ] Read the rules of each subreddit before posting
