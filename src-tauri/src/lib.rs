@@ -115,6 +115,63 @@ fn write_bytes(path: String, bytes: Vec<u8>, make_backup: bool) -> Result<Option
     Ok(backup_path)
 }
 
+/// A backup file we made for a given save, newest first.
+#[derive(serde::Serialize)]
+struct BackupInfo {
+    path: String,
+    name: String,
+    unixtime: u64,
+    size: u64,
+}
+
+/// List the `<path>.modforge-bak-<time>` backups next to a file, newest first,
+/// so the UI can offer one-click restore instead of manual file renaming.
+#[tauri::command]
+fn list_backups(path: String) -> Result<Vec<BackupInfo>, String> {
+    let target = Path::new(&path);
+    let dir = target.parent().unwrap_or_else(|| Path::new("."));
+    let fname = target
+        .file_name()
+        .and_then(|s| s.to_str())
+        .ok_or("bad path")?;
+    let prefix = format!("{}.modforge-bak-", fname);
+    let mut out = Vec::new();
+    if let Ok(entries) = fs::read_dir(dir) {
+        for e in entries.flatten() {
+            let name = e.file_name().to_string_lossy().into_owned();
+            if let Some(ts) = name.strip_prefix(&prefix) {
+                let unixtime = ts.parse::<u64>().unwrap_or(0);
+                let size = e.metadata().map(|m| m.len()).unwrap_or(0);
+                out.push(BackupInfo {
+                    path: e.path().to_string_lossy().into_owned(),
+                    name,
+                    unixtime,
+                    size,
+                });
+            }
+        }
+    }
+    out.sort_by(|a, b| b.unixtime.cmp(&a.unixtime));
+    Ok(out)
+}
+
+/// Restore a backup over its original file. Before overwriting, the CURRENT file is
+/// itself backed up first (so a restore is also undoable). Returns that safety copy's path.
+#[tauri::command]
+fn restore_backup(backup_path: String, target_path: String) -> Result<Option<String>, String> {
+    if !Path::new(&backup_path).exists() {
+        return Err("backup file no longer exists".into());
+    }
+    let mut safety: Option<String> = None;
+    if Path::new(&target_path).exists() {
+        let bp = format!("{}.modforge-bak-{}", target_path, timestamp());
+        fs::copy(&target_path, &bp).map_err(|e| format!("pre-restore backup failed: {e}"))?;
+        safety = Some(bp);
+    }
+    fs::copy(&backup_path, &target_path).map_err(|e| format!("restore failed: {e}"))?;
+    Ok(safety)
+}
+
 // ---- SQLite save editing (many Android/Unity games store saves as SQLite) ----
 
 #[derive(serde::Serialize)]
@@ -257,6 +314,8 @@ pub fn run() {
             write_file,
             read_bytes,
             write_bytes,
+            list_backups,
+            restore_backup,
             sqlite_tables,
             sqlite_table,
             sqlite_set,

@@ -63,6 +63,25 @@ export function writeFile(
   return invoke<string | null>("write_file", { path, contents, makeBackup });
 }
 
+// ---- Backups (one-click restore, no file renaming) ----
+
+export interface BackupInfo {
+  path: string;
+  name: string;
+  unixtime: number;
+  size: number;
+}
+
+/** List `<path>.modforge-bak-*` backups next to a file, newest first. */
+export function listBackups(path: string): Promise<BackupInfo[]> {
+  return invoke<BackupInfo[]>("list_backups", { path });
+}
+
+/** Restore a backup over its original (the current file is backed up first). */
+export function restoreBackup(backupPath: string, targetPath: string): Promise<string | null> {
+  return invoke<string | null>("restore_backup", { backupPath, targetPath });
+}
+
 // ---- SQLite (game saves stored as .sqlite/.db) ----
 
 export interface SqlTable {

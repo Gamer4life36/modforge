@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { pickFile, readBytes, writeBytes } from "../lib/tauri-io";
-import { scanSave, applyEdits, type NrbfField, type Edit } from "../core/nrbf";
+import {
+  pickFile,
+  readBytes,
+  writeBytes,
+  listBackups,
+  restoreBackup,
+  type BackupInfo,
+} from "../lib/tauri-io";
+import { scanSave, applyEdits, isNrbf, type NrbfField, type Edit } from "../core/nrbf";
+import { scanProtobuf, applyProtobufEdits, type ProtobufScan } from "../core/protobuf";
 import {
   planSaveEdits,
   hasKey,
@@ -37,6 +45,10 @@ export default function Agent({
   const [values, setValues] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [drift, setDrift] = useState<string | undefined>(undefined);
+  const [format, setFormat] = useState<"nrbf" | "protobuf" | null>(null);
+  const [protoScan, setProtoScan] = useState<ProtobufScan | null>(null);
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [showBackups, setShowBackups] = useState(false);
 
   const [goal, setGoal] = useState("");
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -56,22 +68,62 @@ export default function Agent({
   async function openPath(p: string) {
     setBusy(true);
     setProposals([]);
+    setShowBackups(false);
     try {
       const b = await readBytes(p);
-      const res = scanSave(b);
+      // Format detection: .NET BinaryFormatter first, then protobuf, else best-effort NRBF.
+      let fmt: "nrbf" | "protobuf" = "nrbf";
+      let scanned: NrbfField[] = [];
+      let driftMsg: string | undefined;
+      let proto: ProtobufScan | null = null;
+      if (isNrbf(b)) {
+        const res = scanSave(b);
+        scanned = res.fields;
+        driftMsg = res.drift;
+      } else if ((proto = scanProtobuf(b))) {
+        fmt = "protobuf";
+        scanned = proto.fields;
+      } else {
+        const res = scanSave(b);
+        scanned = res.fields;
+        driftMsg = res.drift;
+      }
       setBytes(b);
       setPath(p);
-      setFields(res.fields);
-      setDrift(res.drift);
+      setFormat(fmt);
+      setProtoScan(proto);
+      setFields(scanned);
+      setDrift(driftMsg);
       const v: Record<string, string> = {};
-      res.fields.forEach((f) => (v[f.id] = String(f.value)));
+      scanned.forEach((f) => (v[f.id] = String(f.value)));
       setValues(v);
+      await refreshBackups(p);
       setStatus(
-        `Scanned ${basename(p)} — ${res.fields.length} editable field(s)` +
-          (res.drift ? " (partial: nested data recovered by pattern scan)" : "")
+        `Scanned ${basename(p)} [${fmt.toUpperCase()}] — ${scanned.length} editable field(s)` +
+          (driftMsg ? " (partial: nested data recovered by pattern scan)" : "")
       );
     } catch (e) {
       setStatus("Open failed: " + msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshBackups(p = path) {
+    if (!p) return;
+    try { setBackups(await listBackups(p)); } catch { /* ignore */ }
+  }
+
+  async function doRestore(backupPath: string) {
+    if (!path) return;
+    setBusy(true);
+    try {
+      await restoreBackup(backupPath, path);
+      setShowBackups(false);
+      await openPath(path); // re-read & re-scan the restored file
+      setStatus(`Restored ${basename(backupPath)} → ${basename(path)}`);
+    } catch (e) {
+      setStatus("Restore failed: " + msg(e));
     } finally {
       setBusy(false);
     }
@@ -83,25 +135,42 @@ export default function Agent({
   async function commit(edits: { field: NrbfField; value: number }[]) {
     if (!path || !bytes) return;
     try {
-      const e: Edit[] = edits.map(({ field, value }) => ({
-        offset: field.offset,
-        kind: field.kind,
-        value,
-      }));
-      const next = applyEdits(bytes, e);
+      let next: Uint8Array;
+      if (format === "protobuf" && protoScan) {
+        // protobuf re-encodes; only edited branches change, rest stays byte-identical
+        next = applyProtobufEdits(bytes, protoScan, edits.map((e) => ({ path: e.field.id, value: e.value })));
+      } else {
+        const e: Edit[] = edits.map(({ field, value }) => ({ offset: field.offset, kind: field.kind, value }));
+        next = applyEdits(bytes, e); // NRBF: length-preserving byte patch
+      }
       const backup = await writeBytes(path, next, true);
-      setBytes(next);
-      setFields((fs) =>
-        fs.map((f) => {
-          const hit = edits.find((x) => x.field.id === f.id);
-          return hit ? { ...f, value: hit.value } : f;
-        })
-      );
-      setValues((vv) => {
-        const n = { ...vv };
-        edits.forEach(({ field, value }) => (n[field.id] = String(value)));
-        return n;
-      });
+
+      if (format === "protobuf") {
+        // offsets shift after re-encode → re-scan for fresh field positions
+        const s = scanProtobuf(next);
+        setBytes(next);
+        if (s) {
+          setProtoScan(s);
+          setFields(s.fields);
+          const v: Record<string, string> = {};
+          s.fields.forEach((f) => (v[f.id] = String(f.value)));
+          setValues(v);
+        }
+      } else {
+        setBytes(next);
+        setFields((fs) =>
+          fs.map((f) => {
+            const hit = edits.find((x) => x.field.id === f.id);
+            return hit ? { ...f, value: hit.value } : f;
+          })
+        );
+        setValues((vv) => {
+          const n = { ...vv };
+          edits.forEach(({ field, value }) => (n[field.id] = String(value)));
+          return n;
+        });
+      }
+      await refreshBackups();
       setStatus(
         `Wrote ${edits.length} edit(s) to ${basename(path)}` +
           (backup ? ` · backup: ${basename(backup)}` : "")
@@ -184,7 +253,18 @@ export default function Agent({
         <button className="btn primary" disabled={busy} onClick={open}>
           📂 Open save…
         </button>
+        {path && (
+          <button
+            className="btn"
+            disabled={busy || backups.length === 0}
+            onClick={() => setShowBackups((s) => !s)}
+            title={backups.length ? `${backups.length} backup(s) available` : "No backups yet"}
+          >
+            ⟲ Restore backup{backups.length ? ` (${backups.length})` : ""}
+          </button>
+        )}
         {path && <span className="fname" title={path}>{basename(path)}</span>}
+        {format && <span className="hint" style={{ opacity: 0.7 }}>· {format.toUpperCase()}</span>}
         <div className="spacer" />
         {busy && <span className="spin">working…</span>}
         {fields.length > 0 && (
@@ -201,14 +281,32 @@ export default function Agent({
       <div className="trainer-body">
         {!path && (
           <div className="empty">
-            <p>Open an offline game save — including <b>.NET BinaryFormatter</b> binaries
-              (many Unity / C# mobile games) that the Trainer can't read.</p>
+            <p>Open an offline game save — including <b>.NET BinaryFormatter</b> and
+              <b> Protocol Buffers</b> binaries (many Unity / C# mobile games) that the Trainer can't read.</p>
             <button className="btn primary" onClick={open}>Open a save</button>
             <p className="hint">
               It parses the binary, finds every editable number &amp; flag, and lets an AI
               turn a plain-English goal into concrete edits. Every write is backed up first.
               Offline / single-player only.
             </p>
+          </div>
+        )}
+
+        {path && showBackups && (
+          <div className="proposal-box" style={{ margin: "8px 4px", border: "1px solid var(--border,#333)", borderRadius: 8, padding: 10 }}>
+            <div className="conv-label">⟲ Restore a backup (replaces the current file — the current version is backed up first)</div>
+            {backups.length === 0 && <div className="hint" style={{ marginTop: 6 }}>No backups for this file yet.</div>}
+            {backups.map((b) => (
+              <div key={b.path} className="trainer-row">
+                <span className="trainer-label" title={b.path}>
+                  {b.name}
+                  <span className="hint" style={{ display: "block" }}>
+                    {new Date(b.unixtime * 1000).toLocaleString()} · {(b.size / 1024).toFixed(1)} KB
+                  </span>
+                </span>
+                <button className="btn" disabled={busy} onClick={() => doRestore(b.path)}>Restore this</button>
+              </div>
+            ))}
           </div>
         )}
 

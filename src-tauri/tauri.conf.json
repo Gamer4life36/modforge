@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ModForge",
   "mainBinaryName": "ModForge",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "identifier": "com.modforge.toolkit",
   "build": {
     "frontendDist": "../dist",

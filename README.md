@@ -16,7 +16,7 @@ never leave your machine.
 |-----|--------------|
 | **Editor** | Open any JSON · INI · TOML · YAML · XML · CSV file (or view binaries as hex) and edit every setting as a field — no hand-editing text. Undo/redo, delete, duplicate, and an **automatic backup before every save**. |
 | **Trainer** | Point it at a game save (JSON / XML / INI / **SQLite**) and it **auto-scans for editable numbers**, sorts them into groups (Currency, Health, Resources, Stats…), and lets you type a new value or hit **Max**. Every change is backed up first. |
-| **AI Agent** | Opens **binary saves** the Trainer can't — **.NET BinaryFormatter / MS-NRBF** (used by tons of Unity / C# mobile games). It parses the object graph, labels every editable number & flag by its class/field name, and lets you **describe a goal in plain English** ("max all resources", "unlock the gun") — an AI turns it into concrete edits you review before applying. Length-preserving writes keep the save valid; every write is backed up. |
+| **AI Agent** | Opens **binary saves** the Trainer can't — **.NET BinaryFormatter / MS-NRBF** and **Protocol Buffers** (used by tons of Unity / C# mobile games). It parses the format, labels every editable number & flag, and lets you **describe a goal in plain English** ("max all resources", "unlock the gun") — an AI turns it into concrete edits you review before applying. Writes are backed up, and any backup can be **restored in one click** (no file renaming). |
 | **Device** | Connect an Android phone/tablet over USB and, in one click, **find the game that's running, stop it, and list its save files**. Pull a save → it opens in the Trainer → edit → **push it back**. |
 | **Database** | Browse and edit **SQLite** save databases table-by-table — see every table, row, and cell, and change values in place. |
 | **Converter** | Convert a config between JSON ⇄ YAML ⇄ TOML ⇄ INI ⇄ XML ⇄ CSV. Auto-detects the source format. Copy or save the result. |
@@ -134,7 +134,7 @@ No phone needed:
 2. Double-click it. It installs per-user (no admin needed) and adds a Start-Menu shortcut.
 3. **SmartScreen warning?** Because the app isn't code-signed yet, Windows may show
    *"Windows protected your PC."* Click **More info → Run anyway**. (This is normal for
-   new indie apps; it goes away once the app is signed.)
+   new indie apps; it goes away once the app is signed — maintainers, see [SIGNING.md](SIGNING.md).)
 
 Prefer no install? A portable **`ModForge.exe`** is attached to each release too.
 
@@ -195,12 +195,13 @@ npm run tauri build    # produce a release installer in src-tauri/target/release
 
 ## 🗺 Roadmap
 
-- Backups browser + one-click restore
-- More save formats in the Trainer's auto-scan (Unity `PlayerPrefs`, protobuf)
+- ✅ One-click backup restore (done — AI Agent tab)
+- ✅ Protocol Buffers support (done — AI Agent tab)
+- More save formats (Unity `PlayerPrefs` binary, encrypted saves)
 - Array/section add in the Editor for more formats
 - Game-specific presets for the Planner
 - Charts in the Tracker
-- Code-signing + auto-update
+- Code-signing (see [SIGNING.md](SIGNING.md)) + auto-update
 
 ---
 
