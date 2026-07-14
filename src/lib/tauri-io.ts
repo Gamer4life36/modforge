@@ -77,3 +77,8 @@ export function sqliteSet(
 export function adbRun(args: string[]): Promise<string> {
   return invoke<string>("adb_run", { args });
 }
+
+/** A writable temp path to stage a pulled save file before opening it. */
+export function tempPath(name: string): Promise<string> {
+  return invoke<string>("temp_path", { name });
+}

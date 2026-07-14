@@ -22,6 +22,12 @@ type Tab =
 export default function App() {
   const [tab, setTab] = useState<Tab>("editor");
   const [status, setStatus] = useState("ModForge ready — open a file to begin.");
+  const [pendingOpen, setPendingOpen] = useState<{ path: string; nonce: number } | undefined>(undefined);
+
+  function openInTrainer(path: string) {
+    setPendingOpen({ path, nonce: Date.now() });
+    setTab("trainer");
+  }
 
   return (
     <div className="app">
@@ -85,13 +91,13 @@ export default function App() {
 
       <div className="module-host">
         {tab === "editor" && <Editor setStatus={setStatus} />}
-        {tab === "trainer" && <Trainer setStatus={setStatus} />}
+        {tab === "trainer" && <Trainer setStatus={setStatus} autoOpen={pendingOpen} />}
         {tab === "converter" && <Converter setStatus={setStatus} />}
         {tab === "logs" && <LogExplainer setStatus={setStatus} />}
         {tab === "planner" && <Planner setStatus={setStatus} />}
         {tab === "tracker" && <Tracker setStatus={setStatus} />}
         {tab === "database" && <Database setStatus={setStatus} />}
-        {tab === "device" && <Device setStatus={setStatus} />}
+        {tab === "device" && <Device setStatus={setStatus} onOpen={openInTrainer} />}
       </div>
 
       <footer className="status">{status}</footer>

@@ -305,3 +305,14 @@ th, .rowops { white-space: nowrap; }
 }
 .trainer-row .valinput { flex: 0 0 200px; }
 .trainer-row .btn { flex: 0 0 auto; padding: 5px 12px; }
+
+/* Device: found-files list */
+.device-files { display: flex; flex-direction: column; gap: 4px; }
+.file-pick {
+  text-align: left; background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  font-family: "Cascadia Code", monospace; font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.file-pick:hover { border-color: var(--accent); color: var(--accent); }
+.file-pick:disabled { opacity: 0.5; cursor: default; }

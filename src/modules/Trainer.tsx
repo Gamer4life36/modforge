@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   pickFile,
   readFile,
@@ -45,7 +45,13 @@ const basename = (p: string) => p.replace(/\\/g, "/").split("/").pop() ?? p;
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const isNum = (s: string) => s.trim() !== "" && Number.isFinite(Number(s));
 
-export default function Trainer({ setStatus }: { setStatus: (s: string) => void }) {
+export default function Trainer({
+  setStatus,
+  autoOpen,
+}: {
+  setStatus: (s: string) => void;
+  autoOpen?: { path: string; nonce: number };
+}) {
   const [path, setPath] = useState<string | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -68,10 +74,18 @@ export default function Trainer({ setStatus }: { setStatus: (s: string) => void 
     setStatus(`Scanned ${basename(p)} (${kind}) — found ${ents.length} editable number(s)`);
   }
 
+  // When the Device tab pulls a save and hands it off, open it automatically.
+  useEffect(() => {
+    if (autoOpen && autoOpen.path) openPath(autoOpen.path);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpen?.nonce]);
+
   async function open() {
     const p = await pickFile();
-    if (!p) return;
+    if (p) openPath(p);
+  }
 
+  async function openPath(p: string) {
     // 1) try SQLite
     try {
       const tables = await sqliteTables(p);

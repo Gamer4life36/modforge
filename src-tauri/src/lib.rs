@@ -201,6 +201,21 @@ fn adb_run(args: Vec<String>) -> Result<String, String> {
     Ok(s)
 }
 
+/// Return a writable temp path (in <temp>/modforge/) for staging a pulled save.
+#[tauri::command]
+fn temp_path(name: String) -> Result<String, String> {
+    let mut dir = std::env::temp_dir();
+    dir.push("modforge");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let fname = std::path::Path::new(&name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .filter(|s| !s.is_empty())
+        .unwrap_or("save.bin");
+    dir.push(fname);
+    Ok(dir.to_string_lossy().into_owned())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -222,7 +237,8 @@ pub fn run() {
             sqlite_tables,
             sqlite_table,
             sqlite_set,
-            adb_run
+            adb_run,
+            temp_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
