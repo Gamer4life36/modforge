@@ -6,9 +6,18 @@ import Planner from "./modules/Planner";
 import Tracker from "./modules/Tracker";
 import Database from "./modules/Database";
 import Device from "./modules/Device";
+import Trainer from "./modules/Trainer";
 import "./App.css";
 
-type Tab = "editor" | "converter" | "logs" | "planner" | "tracker" | "database" | "device";
+type Tab =
+  | "editor"
+  | "trainer"
+  | "converter"
+  | "logs"
+  | "planner"
+  | "tracker"
+  | "database"
+  | "device";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("editor");
@@ -27,6 +36,12 @@ export default function App() {
             onClick={() => setTab("editor")}
           >
             Editor
+          </button>
+          <button
+            className={`tab ${tab === "trainer" ? "active" : ""}`}
+            onClick={() => setTab("trainer")}
+          >
+            Trainer
           </button>
           <button
             className={`tab ${tab === "converter" ? "active" : ""}`}
@@ -70,6 +85,7 @@ export default function App() {
 
       <div className="module-host">
         {tab === "editor" && <Editor setStatus={setStatus} />}
+        {tab === "trainer" && <Trainer setStatus={setStatus} />}
         {tab === "converter" && <Converter setStatus={setStatus} />}
         {tab === "logs" && <LogExplainer setStatus={setStatus} />}
         {tab === "planner" && <Planner setStatus={setStatus} />}
