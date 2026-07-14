@@ -39,6 +39,21 @@ export function readFile(path: string): Promise<ReadResult> {
   return invoke<ReadResult>("read_file", { path });
 }
 
+/** Read a file as raw bytes (for binary saves the AI Save Agent parses). */
+export async function readBytes(path: string): Promise<Uint8Array> {
+  const arr = await invoke<number[]>("read_bytes", { path });
+  return Uint8Array.from(arr);
+}
+
+/** Write raw bytes back. Returns the backup path created, or null. */
+export function writeBytes(
+  path: string,
+  bytes: Uint8Array,
+  makeBackup: boolean
+): Promise<string | null> {
+  return invoke<string | null>("write_bytes", { path, bytes: Array.from(bytes), makeBackup });
+}
+
 /** Returns the backup path that was created (or null if backups were off). */
 export function writeFile(
   path: string,

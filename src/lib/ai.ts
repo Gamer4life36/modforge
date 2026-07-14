@@ -75,3 +75,70 @@ export const SYSTEM_PROMPT =
   "edits, and suggest concrete values. Be concise and practical. When you suggest a " +
   "change, name the exact field path and the value. Never invent fields that aren't " +
   "in the provided content.";
+
+// ---- AI Save Agent: turn a plain-English goal into concrete field edits ----
+
+/** One field surfaced from a binary save, as seen by the agent. */
+export interface AgentField {
+  index: number;
+  label: string; // className.member (or resource #key)
+  kind: "i32" | "u32" | "bool";
+  value: number;
+  category: string;
+}
+
+/** A concrete edit the agent proposes, referencing a scanned field by index. */
+export interface AgentEdit {
+  index: number;
+  newValue: number;
+  reason: string;
+}
+
+const AGENT_SYSTEM =
+  "You are ModForge's Save Agent. You are given a list of editable fields extracted " +
+  "from a single-player OFFLINE game save (each with an index, a class.member label, a " +
+  "type, its current value, and a rough category), plus the user's goal in plain " +
+  "English. Decide which fields to change and to what.\n\n" +
+  "Rules:\n" +
+  "- ONLY reference fields by an index that appears in the list. Never invent fields.\n" +
+  "- For 'max' / 'give me lots' goals, a safe generous value is 10000 (not 2^31 — huge " +
+  "values can overflow or crash a save). For level/tier fields, be conservative: do not " +
+  "exceed a level that already appears among similar fields unless the user gave a number.\n" +
+  "- For boolean unlock flags, use 1 to enable / 0 to disable.\n" +
+  "- Prefer editing gameplay values (currency, resources, health, levels). Do NOT touch " +
+  "fields that look like purchase receipts / real-money IAP ledgers; if the goal requires " +
+  "that, skip it and say so in a reason.\n" +
+  "- Keep the change set tight — only fields that serve the goal.\n\n" +
+  'Respond with ONLY a JSON object: {"edits":[{"index":N,"newValue":N,"reason":"..."}],"note":"one-line summary"}. ' +
+  "No prose outside the JSON.";
+
+function extractJson(text: string): unknown {
+  const a = text.indexOf("{");
+  const b = text.lastIndexOf("}");
+  if (a < 0 || b < 0 || b <= a) throw new Error("AI did not return JSON.");
+  return JSON.parse(text.slice(a, b + 1));
+}
+
+/**
+ * Ask the AI which fields to change to accomplish `goal`. Returns validated edits
+ * whose indices exist in `fields`. Throws NoKeyError if no API key is set.
+ */
+export async function planSaveEdits(
+  fields: AgentField[],
+  goal: string
+): Promise<{ edits: AgentEdit[]; note: string }> {
+  // Compact table keeps token use reasonable even for large saves.
+  const table = fields
+    .map((f) => `${f.index}\t${f.label}\t${f.kind}\t${f.value}\t${f.category}`)
+    .join("\n");
+  const user =
+    `GOAL: ${goal}\n\nFIELDS (index, label, type, value, category):\n` + table;
+
+  const raw = await askAI(AGENT_SYSTEM, user);
+  const parsed = extractJson(raw) as { edits?: AgentEdit[]; note?: string };
+  const valid = new Set(fields.map((f) => f.index));
+  const edits = (parsed.edits ?? []).filter(
+    (e) => valid.has(e.index) && Number.isFinite(e.newValue)
+  );
+  return { edits, note: parsed.note ?? "" };
+}

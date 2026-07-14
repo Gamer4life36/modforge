@@ -7,11 +7,13 @@ import Tracker from "./modules/Tracker";
 import Database from "./modules/Database";
 import Device from "./modules/Device";
 import Trainer from "./modules/Trainer";
+import Agent from "./modules/Agent";
 import "./App.css";
 
 type Tab =
   | "editor"
   | "trainer"
+  | "agent"
   | "converter"
   | "logs"
   | "planner"
@@ -24,9 +26,11 @@ export default function App() {
   const [status, setStatus] = useState("ModForge ready — open a file to begin.");
   const [pendingOpen, setPendingOpen] = useState<{ path: string; nonce: number } | undefined>(undefined);
 
-  function openInTrainer(path: string) {
+  // Pulled device saves route to the Agent — it handles binary (.NET/NRBF) saves
+  // like Murder Hill that the Trainer can't parse.
+  function openInAgent(path: string) {
     setPendingOpen({ path, nonce: Date.now() });
-    setTab("trainer");
+    setTab("agent");
   }
 
   return (
@@ -48,6 +52,12 @@ export default function App() {
             onClick={() => setTab("trainer")}
           >
             Trainer
+          </button>
+          <button
+            className={`tab ${tab === "agent" ? "active" : ""}`}
+            onClick={() => setTab("agent")}
+          >
+            AI Agent
           </button>
           <button
             className={`tab ${tab === "converter" ? "active" : ""}`}
@@ -92,12 +102,13 @@ export default function App() {
       <div className="module-host">
         {tab === "editor" && <Editor setStatus={setStatus} />}
         {tab === "trainer" && <Trainer setStatus={setStatus} autoOpen={pendingOpen} />}
+        {tab === "agent" && <Agent setStatus={setStatus} autoOpen={pendingOpen} />}
         {tab === "converter" && <Converter setStatus={setStatus} />}
         {tab === "logs" && <LogExplainer setStatus={setStatus} />}
         {tab === "planner" && <Planner setStatus={setStatus} />}
         {tab === "tracker" && <Tracker setStatus={setStatus} />}
         {tab === "database" && <Database setStatus={setStatus} />}
-        {tab === "device" && <Device setStatus={setStatus} onOpen={openInTrainer} />}
+        {tab === "device" && <Device setStatus={setStatus} onOpen={openInAgent} />}
       </div>
 
       <footer className="status">{status}</footer>

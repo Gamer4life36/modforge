@@ -94,6 +94,27 @@ fn write_file(path: String, contents: String, make_backup: bool) -> Result<Optio
     Ok(backup_path)
 }
 
+/// Read a file as raw bytes — needed for binary saves (.NET BinaryFormatter,
+/// protobuf, custom formats) that the AI Save Agent parses byte-by-byte.
+#[tauri::command]
+fn read_bytes(path: String) -> Result<Vec<u8>, String> {
+    fs::read(&path).map_err(|e| format!("read failed: {e}"))
+}
+
+/// Write raw bytes back (length-preserving edits keep binary saves valid).
+/// Makes a timestamped backup first when `make_backup` is set.
+#[tauri::command]
+fn write_bytes(path: String, bytes: Vec<u8>, make_backup: bool) -> Result<Option<String>, String> {
+    let mut backup_path: Option<String> = None;
+    if make_backup && Path::new(&path).exists() {
+        let bp = format!("{}.modforge-bak-{}", path, timestamp());
+        fs::copy(&path, &bp).map_err(|e| format!("backup failed: {e}"))?;
+        backup_path = Some(bp);
+    }
+    fs::write(&path, &bytes).map_err(|e| format!("write failed: {e}"))?;
+    Ok(backup_path)
+}
+
 // ---- SQLite save editing (many Android/Unity games store saves as SQLite) ----
 
 #[derive(serde::Serialize)]
@@ -234,6 +255,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             read_file,
             write_file,
+            read_bytes,
+            write_bytes,
             sqlite_tables,
             sqlite_table,
             sqlite_set,

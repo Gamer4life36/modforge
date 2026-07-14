@@ -10,12 +10,13 @@ never leave your machine.
 
 ---
 
-## ✨ What's inside (8 modules)
+## ✨ What's inside (9 modules)
 
 | Tab | What it does |
 |-----|--------------|
 | **Editor** | Open any JSON · INI · TOML · YAML · XML · CSV file (or view binaries as hex) and edit every setting as a field — no hand-editing text. Undo/redo, delete, duplicate, and an **automatic backup before every save**. |
 | **Trainer** | Point it at a game save (JSON / XML / INI / **SQLite**) and it **auto-scans for editable numbers**, sorts them into groups (Currency, Health, Resources, Stats…), and lets you type a new value or hit **Max**. Every change is backed up first. |
+| **AI Agent** | Opens **binary saves** the Trainer can't — **.NET BinaryFormatter / MS-NRBF** (used by tons of Unity / C# mobile games). It parses the object graph, labels every editable number & flag by its class/field name, and lets you **describe a goal in plain English** ("max all resources", "unlock the gun") — an AI turns it into concrete edits you review before applying. Length-preserving writes keep the save valid; every write is backed up. |
 | **Device** | Connect an Android phone/tablet over USB and, in one click, **find the game that's running, stop it, and list its save files**. Pull a save → it opens in the Trainer → edit → **push it back**. |
 | **Database** | Browse and edit **SQLite** save databases table-by-table — see every table, row, and cell, and change values in place. |
 | **Converter** | Convert a config between JSON ⇄ YAML ⇄ TOML ⇄ INI ⇄ XML ⇄ CSV. Auto-detects the source format. Copy or save the result. |
@@ -24,6 +25,16 @@ never leave your machine.
 | **Tracker** | Log progress entries (category, value, note) → totals, personal best, and a **day streak**, plus an **AI trend analysis**. Saved locally. |
 
 All modules share one core engine, one AI client, and one window.
+
+### The AI Agent, step by step
+
+1. **Device** tab → *Grab current game* → click a save → it pulls and **opens in the AI Agent** automatically (binary saves like `.NET BinaryFormatter` route here).
+2. The Agent parses the save and lists every editable number/flag, grouped by category (it recovers dictionary-backed resource tables even when the format nests deeply).
+3. Type a goal — *"set gems to 10000"*, *"max all resources"*, *"unlock the gun"* — and click **Plan edits**. The AI proposes specific field changes with a reason for each.
+4. Review the proposed edits (tick/untick, tweak values), click **Apply & save**. A timestamped backup is written first.
+5. **Device** tab → *Push edited save back* → reopen the game.
+
+> The Agent is built to edit **gameplay values** (currency, resources, levels, unlock flags). It deliberately avoids fabricating purchase/IAP records — see the scope note below.
 
 ---
 
